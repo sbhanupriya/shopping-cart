@@ -1,6 +1,7 @@
 package com.ecom.ProductService.service;
 
 import com.ecom.ProductService.entity.Product;
+import com.ecom.ProductService.exception.ProductServiceCustomException;
 import com.ecom.ProductService.model.ProductRequest;
 import com.ecom.ProductService.model.ProductResponse;
 import com.ecom.ProductService.repository.ProductRepository;
@@ -33,7 +34,7 @@ public class ProductSeviceImpl implements ProductService{
     @Override
     public ProductResponse getProductById(Long productId) {
         log.info("Get the product for Id: {}", productId);
-        Product product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product with given id not found"));
+        Product product = productRepository.findById(productId).orElseThrow(() -> new ProductServiceCustomException("Product with given id not found", "PRODUCT_NOT_FOUND"));
         ProductResponse productResponse = new ProductResponse();
         copyProperties(product, productResponse);
         return productResponse;
