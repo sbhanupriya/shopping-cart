@@ -2,6 +2,7 @@ package com.ecom.OrderService.service;
 
 import com.ecom.OrderService.entity.Order;
 import com.ecom.OrderService.exception.CustomException;
+import com.ecom.OrderService.external.client.ClientService;
 import com.ecom.OrderService.external.client.PaymentService;
 import com.ecom.OrderService.external.client.ProductService;
 import com.ecom.OrderService.external.request.PaymentRequest;
@@ -9,9 +10,11 @@ import com.ecom.OrderService.external.response.PaymentResponse;
 import com.ecom.OrderService.model.OrderRequest;
 import com.ecom.OrderService.model.OrderResponse;
 import com.ecom.OrderService.repository.OrderRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.Builder;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,11 +32,12 @@ public class OrderServiceImpl implements  OrderService{
     private PaymentService paymentService;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private ClientService clientService;
     @Override
     public Long placeOrder(OrderRequest orderRequest) {
       log.info("Placing order request {}", orderRequest);
-
-      productService.reduceQuantity(orderRequest.getProductId(), orderRequest.getQuantity());
+      clientService.callProductService(orderRequest);
 
       log.info("Creating order with status CREATED");
       Order order = Order.builder()
@@ -53,10 +57,9 @@ public class OrderServiceImpl implements  OrderService{
                 .referenceNumber("")
                 .orderId(order.getId())
                 .build();
-
         String orderStatus = null;
         try {
-            paymentService.doPayment(paymentRequest);
+            clientService.callPaymentService(paymentRequest);
             log.info("Payment done successdully, Changing order status to success ");
             orderStatus= "SUCCESS";
         } catch (Exception ex){
@@ -70,7 +73,6 @@ public class OrderServiceImpl implements  OrderService{
 
         return order.getId();
     }
-
     @Override
     public OrderResponse getOrderDetails(Long orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(

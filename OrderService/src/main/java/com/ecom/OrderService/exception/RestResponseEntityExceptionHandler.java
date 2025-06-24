@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.Arrays;
+
 @ControllerAdvice
 public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
@@ -16,6 +18,14 @@ public class RestResponseEntityExceptionHandler extends ResponseEntityExceptionH
         return new ResponseEntity<>(new ErrorResponse().builder()
                 .errorCode(exception.getErrorCode())
                 .errorMessage(exception.getMessage())
+                .build(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception exception){
+        return new ResponseEntity<>(new ErrorResponse().builder()
+                .errorCode(exception.getLocalizedMessage())
+                .errorMessage(Arrays.stream(exception.getStackTrace()).distinct().toString())
                 .build(), HttpStatus.NOT_FOUND);
     }
 }
