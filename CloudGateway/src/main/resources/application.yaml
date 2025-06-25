@@ -7,6 +7,9 @@ spring:
     name: API-GATEWAY
   config:
     import: configserver:http://localhost:9296
+  redis:
+    host: 127.0.0.1
+    port: 6379
   cloud:
     gateway:
       routes:
@@ -19,6 +22,10 @@ spring:
               args:
                 name: ORDER-SERVICE
                 fallbackuri: forward:/orderServiceFallBack
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
         - id: PAYMENT-SERVICE
           uri: lb://PAYMENT-SERVICE
           predicates:
@@ -28,6 +35,10 @@ spring:
               args:
                 name: PAYMENT-SERVICE
                 fallbackuri: forward:/paymentServiceFallBack
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
         - id: PRODUCT-SERVICE
           uri: lb://PRODUCT-SERVICE
           predicates:
@@ -37,4 +48,8 @@ spring:
               args:
                 name: PRODUCT-SERVICE
                 fallbackuri: forward:/productServiceFallBack
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 1
+                redis-rate-limiter.burstCapacity: 1
 
